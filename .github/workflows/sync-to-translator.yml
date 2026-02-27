@@ -1,0 +1,48 @@
+name: Sync glossaries to jira-translator
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '*.json'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout glossary repo
+        uses: actions/checkout@v4
+
+      - name: Checkout jira-translator repo
+        uses: actions/checkout@v4
+        with:
+          repository: Hyunsang-coder/jira-translator
+          token: ${{ secrets.TRANSLATOR_REPO_TOKEN }}
+          path: jira-translator
+
+      - name: Copy glossary files
+        run: |
+          cp *.json jira-translator/glossaries/
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.TRANSLATOR_REPO_TOKEN }}
+          path: jira-translator
+          commit-message: "chore(glossary): sync from glossary repo"
+          branch: auto/glossary-sync
+          delete-branch: true
+          title: "chore(glossary): sync glossary files from source repo"
+          body: |
+            ## Glossary 자동 동기화
+
+            `jira-translator-glossaries` 레포에서 변경된 glossary 파일을 자동으로 반영합니다.
+
+            ### 변경된 파일
+            ${{ github.event.head_commit.message }}
+
+            ### 다음 단계
+            - [ ] 변경 내용 확인
+            - [ ] Merge 후 `./deploy.sh` 실행
+          labels: glossary
